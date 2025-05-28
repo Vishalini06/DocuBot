@@ -12,7 +12,7 @@ from langchain.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
 
-# Extract text from uploaded PDFs
+
 def get_pdf_text(pdf_docs):
     text = ""
     for pdf in pdf_docs:
@@ -23,7 +23,7 @@ def get_pdf_text(pdf_docs):
                 text += content
     return text
 
-# Split text into chunks
+#chunks
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
         separator="\n",
@@ -34,20 +34,19 @@ def get_text_chunks(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
-# Create vector store using HuggingFace embeddings
+#vector storage
 def get_vector_store(text_chunks):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = Chroma.from_texts(texts=text_chunks, embedding=embeddings)
     return vectorstore
 
-# Setup Retrieval QA chain with HuggingFace LLM
+#training
 def get_conversation_chain(vectorstore):
-    # Load the tokenizer and model
+   
     model_id = "google/flan-t5-base"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
 
-    # Create a local pipeline
     local_pipeline = pipeline(
         "text2text-generation",
         model=model,
@@ -56,10 +55,10 @@ def get_conversation_chain(vectorstore):
         temperature=0.5
     )
 
-    # Wrap the pipeline in a LangChain LLM
+  
     llm = HuggingFacePipeline(pipeline=local_pipeline)
 
-    # Create the QA chain
+
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
@@ -68,13 +67,13 @@ def get_conversation_chain(vectorstore):
     return qa_chain
 
 
-# Handle user input and display response
+
 def handle_userinput(user_question):
     response = st.session_state.conversation.run(user_question)
     st.write(user_template.replace("{{MSG}}", user_question), unsafe_allow_html=True)
     st.write(bot_template.replace("{{MSG}}", response), unsafe_allow_html=True)
 
-# Main Streamlit app
+
 def main():
     load_dotenv()
     st.set_page_config(page_title="DocuBot: Chat with multiple PDFs", page_icon=":books:")
